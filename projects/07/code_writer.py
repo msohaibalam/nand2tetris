@@ -16,20 +16,79 @@ class CodeWriter:
         assert self.parser.commandType() in ['C_PUSH', 'C_POP']
         arg1 = self.parser.arg1()
         arg2 = self.parser.arg2()
-        if arg1 == 'constant':
-            if self.parser.commandType() == 'C_PUSH':
+        print ('arg1: ', arg1)
+        print ('arg2: ', arg2)
+        print ("*" * 30)
+        if self.parser.commandType() == 'C_PUSH':
                 # stack operation
-                # e.g. push constant 7
-                self.file.write('@%s\n' % arg2)
-                self.file.write('D=A\n')    # D = 7
+                if arg1 in ['constant', 'local', 'arg', 'this', 'that']:
+                    # e.g. push constant 7
+                    self.file.write('@%s\n' % arg2)
+                    self.file.write('D=A\n')    # D = 7
+                    if arg1 == 'constant':
+                        self.file.write('@SP\n')
+                    elif arg1 == 'local':
+                        self.file.write('@LCL\n')
+                    elif arg1 == 'arg':
+                        self.file.write('@ARG\n')
+                    elif arg1 == 'this':
+                        self.file.write('@THIS\n')
+                    elif arg1 == 'that':
+                        self.file.write('@THAT\n')
+                    else:
+                        # TODO
+                        pass
+                    self.file.write('A=M\n')
+                    self.file.write('M=D\n')    # M[M[base_address]] = 7
+                elif arg1 in ['temp', 'pointer']:
+                    self.file.write('@%s\n' % arg2)
+                    self.file.write('D=A\n')
+                    if arg1 == 'temp':
+                        self.file.write('@5\n')
+                    elif arg1 == 'pointer':
+                        self.file.write('@3\n')
+                    else:
+                        pass
+                    self.file.write('A=D+A\n')
+                    self.file.write('D=M\n')
+                    self.file.write('@SP\n')
+                    self.file.write('A=M\n')
+                    self.file.write('M=D\n')
+                else:
+                    # TODO
+                    pass
+                # increase address of stack top
                 self.file.write('@SP\n')
-                self.file.write('A=M\n')
-                self.file.write('M=D\n')    # M[M[0]] = 7
-                self.file.write('@SP\n')
-                self.file.write('M=M+1\n')  # M[0] = M[0] + 1
+                self.file.write('M=M+1\n')  # M[base_address] = M[base_address] + 1
+
+        elif self.parser.commandType() == 'C_POP':
+            # pop the stack value and store it in segment[index]
+            # use general purpose RAM[13] to store the value of 'segment_base_address + index'
+            self.file.write('@%s\n' % arg2)
+            self.file.write('D=A\n')
+            if arg1 == 'local':
+                print ('local arg1 passed for pop')
+                self.file.write('@LCL\n')
+            elif arg1 == 'arg':
+                self.file.write('@ARG\n')
+            elif arg1 == 'this':
+                self.file.write('@THIS\n')
+            elif arg1 == 'that':
+                self.file.write('@THAT\n')
             else:
                 # TODO
                 pass
+            self.file.write('D=D+M\n')
+            self.file.write('@13\n')      # general purpose register
+            self.file.write('M=D\n')
+            self.file.write('@SP\n')
+            self.file.write('A=M-1\n')
+            self.file.write('D=M\n')        # pop command
+            self.file.write('@13\n')
+            self.file.write('A=M\n')
+            self.file.write('M=D\n')
+            self.file.write('@SP\n')
+            self.file.write('M=M-1\n')
         else:
             # TODO
             pass
@@ -174,11 +233,31 @@ class CodeWriter:
         self.file.write('D=A\n')
         self.file.write('@SP\n')
         self.file.write('M=D\n')
+        # set the local address to 300
+        self.file.write('@300\n')
+        self.file.write('D=A\n')
+        self.file.write('@LCL\n')
+        self.file.write('M=D\n')
+        # set the argument address to 400
+        self.file.write('@400\n')
+        self.file.write('D=A\n')
+        self.file.write('@ARG\n')
+        self.file.write('M=D\n')
+        # set the this address to 3000
+        self.file.write('@3000\n')
+        self.file.write('D=A\n')
+        self.file.write('@THIS\n')
+        self.file.write('M=D\n')
+        # set the that address to 3010
+        self.file.write('@3010\n')
+        self.file.write('D=A\n')
+        self.file.write('@THAT\n')
+        self.file.write('M=D\n')
         self.parser.i = -1
         while self.parser.hasMoreCommands():
             self.parser.advance()
             c_type = self.parser.commandType()
-            if c_type == 'C_PUSH':
+            if c_type in ['C_PUSH', 'C_POP']:
                 self.writePushPop()
             elif c_type == 'C_ARITHMETIC':
                 self.writeArithmetic()
@@ -187,7 +266,9 @@ class CodeWriter:
 
 
 if __name__ == "__main__":
-    for path in ["StackArithmetic/SimpleAdd/SimpleAdd.vm", "StackArithmetic/StackTest/StackTest.vm"]:
+    # for path in ["StackArithmetic/SimpleAdd/SimpleAdd.vm", "StackArithmetic/StackTest/StackTest.vm", "MemoryAccess/BasicTest/BasicTest.vm"]:
+    for path in ["MemoryAccess/BasicTest/BasicTest.vm"]:
     # for path in ["StackArithmetic/StackTest/try_random.vm"]:
         codewriter = CodeWriter(path)
+        # print (codewriter.parser.clean_lines)
         codewriter.createOutput()
