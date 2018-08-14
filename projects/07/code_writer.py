@@ -25,17 +25,6 @@ class CodeWriter:
                     self.file.write('@SP\n')
                     self.file.write('A=M\n')
                     self.file.write('M=D\n')    # M[M[base_address]] = 7
-                    # elif arg1 == 'local':
-                    #     self.file.write('@LCL\n')
-                    # elif arg1 == 'arg':
-                    #     self.file.write('@ARG\n')
-                    # elif arg1 == 'this':
-                    #     self.file.write('@THIS\n')
-                    # elif arg1 == 'that':
-                    #     self.file.write('@THAT\n')
-                    # else:
-                    #     # TODO
-                    #     pass
                 elif arg1 in ['temp', 'pointer', 'local', 'argument', 'this', 'that']:
                     self.file.write('@%s\n' % arg2)
                     self.file.write('D=A\n')
@@ -59,7 +48,6 @@ class CodeWriter:
                         self.file.write('A=D+M\n')
                     else:
                         pass
-                    # self.file.write('A=D+A\n')
                     self.file.write('D=M\n')
                     self.file.write('@SP\n')
                     self.file.write('A=M\n')
@@ -286,8 +274,5 @@ class CodeWriter:
 
 if __name__ == "__main__":
     for path in ["StackArithmetic/SimpleAdd/SimpleAdd.vm", "StackArithmetic/StackTest/StackTest.vm", "MemoryAccess/BasicTest/BasicTest.vm"]:
-    # for path in ["MemoryAccess/BasicTest/BasicTest.vm"]:
-    # for path in ["StackArithmetic/StackTest/try_random.vm"]:
         codewriter = CodeWriter(path)
-        # print (codewriter.parser.clean_lines)
         codewriter.createOutput()
