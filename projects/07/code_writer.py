@@ -11,7 +11,6 @@ class CodeWriter:
         writefile = path[:ind1] + "/" + path[ind1+1:ind2]
         self.filename = writefile + '.asm'
         self.file = open(self.filename, 'w')
-        # self.stack = []
 
     def writePushPop(self):   # no need to pass in command as an argument
         assert self.parser.commandType() in ['C_PUSH', 'C_POP']
@@ -19,9 +18,7 @@ class CodeWriter:
         arg2 = self.parser.arg2()
         if arg1 == 'constant':
             if self.parser.commandType() == 'C_PUSH':
-                # # push to stack
-                # self.stack.append(int(arg2))
-                # write to file
+                # stack operation
                 # e.g. push constant 7
                 self.file.write('@%s\n' % arg2)
                 self.file.write('D=A\n')    # D = 7
@@ -38,15 +35,12 @@ class CodeWriter:
             pass
 
     def writeArithmetic(self):   # no need to pass in command as an argument
+
         assert self.parser.commandType() == 'C_ARITHMETIC'
         command = self.parser.arg1()
+
         if command == 'add':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = x + y
-            # self.stack.append(result)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
@@ -55,13 +49,9 @@ class CodeWriter:
             self.file.write('M=D\n')
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
+
         elif command == 'sub':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = y - x
-            # self.stack.append(result)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
@@ -70,15 +60,9 @@ class CodeWriter:
             self.file.write('M=D\n')
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
+
         elif command == 'eq':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = (x == y)
-            # d_bool = {False: 0, True: -1}
-            # result_int = d_bool[result]
-            # self.stack.append(result_int)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
@@ -101,21 +85,8 @@ class CodeWriter:
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
 
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('A=A-1\n')
-            # self.file.write('M=%s\n' % result_int)
-            # self.file.write('@SP\n')
-            # self.file.write('M=M-1\n')
         elif command == 'gt':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = (y > x)
-            # d_bool = {False: 0, True: -1}
-            # result_int = d_bool[result]
-            # self.stack.append(result_int)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
@@ -138,21 +109,8 @@ class CodeWriter:
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
 
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('A=A-1\n')
-            # self.file.write('M=%s\n' % result_int)
-            # self.file.write('@SP\n')
-            # self.file.write('M=M-1\n')
         elif command == 'lt':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = (y < x)
-            # d_bool = {False: 0, True: -1}
-            # result_int = d_bool[result]
-            # self.stack.append(result_int)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
@@ -175,96 +133,38 @@ class CodeWriter:
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
 
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('A=A-1\n')
-            # self.file.write('M=%s\n' % result_int)
-            # self.file.write('@SP\n')
-            # self.file.write('M=M-1\n')
         elif command == 'and':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = (x & y)    # bit-wise and
-            # self.stack.append(result)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
             self.file.write('A=A-1\n')
             self.file.write('M=D&M\n')
-            # self.file.write('D=D&M\n')
-            # self.file.write('M=D\n')
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
 
-            # self.file.write('@%s\n' % result)
-            # self.file.write('D=A\n')
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('A=A-1\n')
-            # self.file.write('M=D\n')
-            # self.file.write('@SP\n')
-            # self.file.write('M=M-1\n')
         elif command == 'or':
-            # # stack operation
-            # x = self.stack.pop()
-            # y = self.stack.pop()
-            # result = (x | y)    # bit-wise or
-            # self.stack.append(result)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('D=M\n')
             self.file.write('A=A-1\n')
             self.file.write('M=D|M\n')
-            # self.file.write('D=D|M\n')
-            # self.file.write('M=D\n')
             self.file.write('@SP\n')
             self.file.write('M=M-1\n')
 
-            # self.file.write('@%s\n' % result)
-            # self.file.write('D=A\n')
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('A=A-1\n')
-            # self.file.write('M=D\n')
-            # self.file.write('@SP\n')
-            # self.file.write('M=M-1\n')
         elif command == 'neg':
-            # # stack operation
-            # x = self.stack.pop()
-            # result = -x
-            # self.stack.append(result)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('M=-M\n')
-            # self.file.write('D=-M\n')
-            # self.file.write('M=D\n')
 
-            # self.file.write('@%s\n' % x)
-            # self.file.write('D=-A\n')
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('M=D\n')
         elif command == 'not':
-            # # stack operation
-            # x = self.stack.pop()
-            # result = ~x
-            # self.stack.append(result)
-            # write to file
+            # stack operation
             self.file.write('@SP\n')
             self.file.write('A=M-1\n')
             self.file.write('M=!M\n')
-            # self.file.write('D=!M\n')
-            # self.file.write('M=D\n')
 
-            # self.file.write('@%s\n' % x)
-            # self.file.write('D=!A\n')
-            # self.file.write('@SP\n')
-            # self.file.write('A=M-1\n')
-            # self.file.write('M=D\n')
         else:
             raise ValueError("Unrecognized command for C_ARITHMETIC command type")
 
