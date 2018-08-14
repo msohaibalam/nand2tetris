@@ -16,19 +16,15 @@ class CodeWriter:
         assert self.parser.commandType() in ['C_PUSH', 'C_POP']
         arg1 = self.parser.arg1()
         arg2 = self.parser.arg2()
-        print ('arg1: ', arg1)
-        print ('arg2: ', arg2)
-        print ("*" * 30)
         if self.parser.commandType() == 'C_PUSH':
                 # stack operation
-                if arg1 in ['constant', 'local', 'arg', 'this', 'that']:
+                if arg1 == 'constant':
                     # e.g. push constant 7
                     self.file.write('@%s\n' % arg2)
                     self.file.write('D=A\n')    # D = 7
-                    if arg1 == 'constant':
-                        self.file.write('@SP\n')
-                        self.file.write('A=M\n')
-                        self.file.write('M=D\n')    # M[M[base_address]] = 7
+                    self.file.write('@SP\n')
+                    self.file.write('A=M\n')
+                    self.file.write('M=D\n')    # M[M[base_address]] = 7
                     # elif arg1 == 'local':
                     #     self.file.write('@LCL\n')
                     # elif arg1 == 'arg':
@@ -49,7 +45,7 @@ class CodeWriter:
                         self.file.write('@3\n')
                     elif arg1 == 'local':
                         self.file.write('@LCL\n')
-                    elif arg1 == 'arg':
+                    elif arg1 == 'argument':
                         self.file.write('@ARG\n')
                     elif arg1 == 'this':
                         self.file.write('@THIS\n')
@@ -75,22 +71,27 @@ class CodeWriter:
             self.file.write('@%s\n' % arg2)
             self.file.write('D=A\n')
             if arg1 == 'local':
-                print ('local arg1 passed for pop')
                 self.file.write('@LCL\n')
-            elif arg1 == 'arg':
+                self.file.write('D=D+M\n')
+            elif arg1 == 'argument':
                 self.file.write('@ARG\n')
+                self.file.write('D=D+M\n')
             elif arg1 == 'this':
                 self.file.write('@THIS\n')
+                self.file.write('D=D+M\n')
             elif arg1 == 'that':
                 self.file.write('@THAT\n')
+                self.file.write('D=D+M\n')
             elif arg1 == 'temp':
                 self.file.write('@5\n')
+                self.file.write('D=D+A\n')
             elif arg1 == 'pointer':
                 self.file.write('@3\n')
+                self.file.write('D=D+A\n')
             else:
                 # TODO
                 pass
-            self.file.write('D=D+M\n')
+            # self.file.write('D=D+M\n')
             self.file.write('@13\n')      # general purpose register
             self.file.write('M=D\n')
             self.file.write('@SP\n')
