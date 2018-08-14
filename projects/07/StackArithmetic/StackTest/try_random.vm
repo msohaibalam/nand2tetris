@@ -1,0 +1,3 @@
+push constant 100
+push constant 191
+sub

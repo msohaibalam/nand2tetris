@@ -1,0 +1,96 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/03/a/PC.hdl
+
+/**
+ * A 16-bit counter with load and reset control bits.
+ * if      (reset[t] == 1) out[t+1] = 0
+ * else if (load[t] == 1)  out[t+1] = in[t]
+ * else if (inc[t] == 1)   out[t+1] = out[t] + 1  (integer addition)
+ * else                    out[t+1] = out[t]
+ */
+
+CHIP PC {
+    IN in[16],load,inc,reset;
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+
+    Not(in=reset, out=notR);
+    And(a=notR, b=load, out=notRL);
+    Mux16(a=false, b=in, sel=notRL, out=out2);
+
+    Not(in=load, out=notL);
+    And(a=notR, b=notL, out=notRnotL);
+    And(a=notRnotL, b=inc, out=notRnotLI);
+    Inc16(in=outin, out=out3);
+    Mux16(a=out2, b=out3, sel=notRnotLI, out=out4);
+    Or(a=reset, b=load, out=RorL);
+    Or(a=RorL, b=inc, out=RorLorI);
+    Register(in=out4, load=RorLorI, out=outin, out=out);
+
+    /* // Define all the nots
+
+    Not(in=reset, out=notR);
+    Not(in=load, out=notL);
+    Not(in=inc, out=notI);
+
+    // Define zxIn
+    // zxIn = R = zx
+
+    // Define nxIn
+    And(a=notR, b=notL, out=notRnotL);
+    And(a=notRnotL, b=inc, out=nxIn);
+
+    // Define zyIn
+    And(a=notR, b=load, out=zyInB);
+    And(a=notR, b=notL, out=zyInC1);
+    And(a=zyInC1, b=inc, out=zyInC);
+    And(a=notRnotL, b=notI, out=zyInD);
+    Or(a=reset, b=zyInB, out=zyIn1);
+    Or(a=zyInC, b=zyInD, out=zyIn2);
+    Or(a=zyIn1, b=zyIn2, out=zyIn);
+
+    // Define nyIn
+    And(a=notR, b=load, out=nyInA);
+    And(a=notRnotL, b=inc, out=nyInB);
+    And(a=notRnotL, b=notI, out=nyIn2);
+    Or(a=nyInA, b=nyInB, out=nyIn1);
+    Or(a=nyIn1, b=nyIn2, out=nyIn);
+
+    // Define fIn
+    And(a=notRnotL, b=inc, out=fIn2);
+    Or(a=reset, b=fIn2, out=fIn);
+
+    // Define noIn
+    And(a=notRnotL, b=inc, out=noIn);
+
+    // Register thru the input
+    Mux16(a=outin, b=in, sel=load, out=muxin);
+    Register(in=muxin, load=load, out=regOut);
+
+    // DFF all the other ALU inputs
+    DFF(in=reset, out=resetT);
+    DFF(in=nxIn, out=nxInT);
+    DFF(in=zyIn, out=zyInT);
+    DFF(in=nyIn, out=nyInT);
+    DFF(in=fIn, out=fInT);
+    DFF(in=noIn, out=noInT);
+
+    // ALU thru the register output
+    ALU(x=regOut, y=regOut, zx=resetT, nx=nxInT, zy=zyInT, ny=nyInT, f=fInT, no=noInT, out=out, out=outin);
+
+    //Mux16(a=outin, b=in, sel=load, out=muxin);
+    // DFF all the other ALU inputs
+    DFF(in=reset, out=resetT);
+    DFF(in=nxIn, out=nxInT);
+    DFF(in=zyIn, out=zyInT);
+    DFF(in=nyIn, out=nyInT);
+    DFF(in=fIn, out=fInT);
+    DFF(in=noIn, out=noInT);
+    ALU(x=muxin, y=muxin, zx=resetT, nx=nxInT, zy=zyInT, ny=nyInT, f=fInT, no=noInT, out=aluOut);
+    Register(in=aluOut, load=load, out=out, out=outin);//
+    */
+}

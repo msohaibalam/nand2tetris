@@ -1,0 +1,154 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/01/Mux4Way16.hdl
+
+/**
+ * 4-way 16-bit multiplexor:
+ * out = a if sel == 00
+ *       b if sel == 01
+ *       c if sel == 10
+ *       d if sel == 11
+ */
+
+CHIP Mux4Way16 {
+    IN a[16], b[16], c[16], d[16], sel[2];
+    OUT out[16];
+
+    PARTS:
+    // Put your code here:
+    // Need: For i=0..15, nots0.nots1.a[i] | nots0.s1.b[i] | s0.nots1.c[i] | s0.s1.d[i]
+
+    Not(in=sel[0], out=nots0);
+    Not(in=sel[1], out=nots1);
+    And(a=nots0, b=nots1, out=nots0andnots1);
+    And(a=nots0, b=sel[1], out=nots0ands1);
+    And(a=sel[0], b=nots1, out=s0andnots1);
+    And(a=sel[0], b=sel[1], out=s0ands1);
+
+    // boola
+    And(a=nots0andnots1, b=a[0], out=boola0);
+    And(a=nots0andnots1, b=a[1], out=boola1);
+    And(a=nots0andnots1, b=a[2], out=boola2);
+    And(a=nots0andnots1, b=a[3], out=boola3);
+    And(a=nots0andnots1, b=a[4], out=boola4);
+    And(a=nots0andnots1, b=a[5], out=boola5);
+    And(a=nots0andnots1, b=a[6], out=boola6);
+    And(a=nots0andnots1, b=a[7], out=boola7);
+    And(a=nots0andnots1, b=a[8], out=boola8);
+    And(a=nots0andnots1, b=a[9], out=boola9);
+    And(a=nots0andnots1, b=a[10], out=boola10);
+    And(a=nots0andnots1, b=a[11], out=boola11);
+    And(a=nots0andnots1, b=a[12], out=boola12);
+    And(a=nots0andnots1, b=a[13], out=boola13);
+    And(a=nots0andnots1, b=a[14], out=boola14);
+    And(a=nots0andnots1, b=a[15], out=boola15);
+
+    // boolb
+    And(a=s0andnots1, b=b[0], out=boolb0);
+    And(a=s0andnots1, b=b[1], out=boolb1);
+    And(a=s0andnots1, b=b[2], out=boolb2);
+    And(a=s0andnots1, b=b[3], out=boolb3);
+    And(a=s0andnots1, b=b[4], out=boolb4);
+    And(a=s0andnots1, b=b[5], out=boolb5);
+    And(a=s0andnots1, b=b[6], out=boolb6);
+    And(a=s0andnots1, b=b[7], out=boolb7);
+    And(a=s0andnots1, b=b[8], out=boolb8);
+    And(a=s0andnots1, b=b[9], out=boolb9);
+    And(a=s0andnots1, b=b[10], out=boolb10);
+    And(a=s0andnots1, b=b[11], out=boolb11);
+    And(a=s0andnots1, b=b[12], out=boolb12);
+    And(a=s0andnots1, b=b[13], out=boolb13);
+    And(a=s0andnots1, b=b[14], out=boolb14);
+    And(a=s0andnots1, b=b[15], out=boolb15);
+
+    // boolc
+    And(a=nots0ands1, b=c[0], out=boolc0);
+    And(a=nots0ands1, b=c[1], out=boolc1);
+    And(a=nots0ands1, b=c[2], out=boolc2);
+    And(a=nots0ands1, b=c[3], out=boolc3);
+    And(a=nots0ands1, b=c[4], out=boolc4);
+    And(a=nots0ands1, b=c[5], out=boolc5);
+    And(a=nots0ands1, b=c[6], out=boolc6);
+    And(a=nots0ands1, b=c[7], out=boolc7);
+    And(a=nots0ands1, b=c[8], out=boolc8);
+    And(a=nots0ands1, b=c[9], out=boolc9);
+    And(a=nots0ands1, b=c[10], out=boolc10);
+    And(a=nots0ands1, b=c[11], out=boolc11);
+    And(a=nots0ands1, b=c[12], out=boolc12);
+    And(a=nots0ands1, b=c[13], out=boolc13);
+    And(a=nots0ands1, b=c[14], out=boolc14);
+    And(a=nots0ands1, b=c[15], out=boolc15);
+
+    // boold
+    And(a=s0ands1, b=d[0], out=boold0);
+    And(a=s0ands1, b=d[1], out=boold1);
+    And(a=s0ands1, b=d[2], out=boold2);
+    And(a=s0ands1, b=d[3], out=boold3);
+    And(a=s0ands1, b=d[4], out=boold4);
+    And(a=s0ands1, b=d[5], out=boold5);
+    And(a=s0ands1, b=d[6], out=boold6);
+    And(a=s0ands1, b=d[7], out=boold7);
+    And(a=s0ands1, b=d[8], out=boold8);
+    And(a=s0ands1, b=d[9], out=boold9);
+    And(a=s0ands1, b=d[10], out=boold10);
+    And(a=s0ands1, b=d[11], out=boold11);
+    And(a=s0ands1, b=d[12], out=boold12);
+    And(a=s0ands1, b=d[13], out=boold13);
+    And(a=s0ands1, b=d[14], out=boold14);
+    And(a=s0ands1, b=d[15], out=boold15);
+
+    // boola | boolb
+    Or(a=boola0, b=boolb0, out=boolab0);
+    Or(a=boola1, b=boolb1, out=boolab1);
+    Or(a=boola2, b=boolb2, out=boolab2);
+    Or(a=boola3, b=boolb3, out=boolab3);
+    Or(a=boola4, b=boolb4, out=boolab4);
+    Or(a=boola5, b=boolb5, out=boolab5);
+    Or(a=boola6, b=boolb6, out=boolab6);
+    Or(a=boola7, b=boolb7, out=boolab7);
+    Or(a=boola8, b=boolb8, out=boolab8);
+    Or(a=boola9, b=boolb9, out=boolab9);
+    Or(a=boola10, b=boolb10, out=boolab10);
+    Or(a=boola11, b=boolb11, out=boolab11);
+    Or(a=boola12, b=boolb12, out=boolab12);
+    Or(a=boola13, b=boolb13, out=boolab13);
+    Or(a=boola14, b=boolb14, out=boolab14);
+    Or(a=boola15, b=boolb15, out=boolab15);
+
+    // boolc | boold
+    Or(a=boolc0, b=boold0, out=boolcd0);
+    Or(a=boolc1, b=boold1, out=boolcd1);
+    Or(a=boolc2, b=boold2, out=boolcd2);
+    Or(a=boolc3, b=boold3, out=boolcd3);
+    Or(a=boolc4, b=boold4, out=boolcd4);
+    Or(a=boolc5, b=boold5, out=boolcd5);
+    Or(a=boolc6, b=boold6, out=boolcd6);
+    Or(a=boolc7, b=boold7, out=boolcd7);
+    Or(a=boolc8, b=boold8, out=boolcd8);
+    Or(a=boolc9, b=boold9, out=boolcd9);
+    Or(a=boolc10, b=boold10, out=boolcd10);
+    Or(a=boolc11, b=boold11, out=boolcd11);
+    Or(a=boolc12, b=boold12, out=boolcd12);
+    Or(a=boolc13, b=boold13, out=boolcd13);
+    Or(a=boolc14, b=boold14, out=boolcd14);
+    Or(a=boolc15, b=boold15, out=boolcd15);
+
+    // boola | boolb | boolc | boold
+    Or(a=boolab0, b=boolcd0, out=out[0]);
+    Or(a=boolab1, b=boolcd1, out=out[1]);
+    Or(a=boolab2, b=boolcd2, out=out[2]);
+    Or(a=boolab3, b=boolcd3, out=out[3]);
+    Or(a=boolab4, b=boolcd4, out=out[4]);
+    Or(a=boolab5, b=boolcd5, out=out[5]);
+    Or(a=boolab6, b=boolcd6, out=out[6]);
+    Or(a=boolab7, b=boolcd7, out=out[7]);
+    Or(a=boolab8, b=boolcd8, out=out[8]);
+    Or(a=boolab9, b=boolcd9, out=out[9]);
+    Or(a=boolab10, b=boolcd10, out=out[10]);
+    Or(a=boolab11, b=boolcd11, out=out[11]);
+    Or(a=boolab12, b=boolcd12, out=out[12]);
+    Or(a=boolab13, b=boolcd13, out=out[13]);
+    Or(a=boolab14, b=boolcd14, out=out[14]);
+    Or(a=boolab15, b=boolcd15, out=out[15]);
+}

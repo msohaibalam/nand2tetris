@@ -1,0 +1,86 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/02/ALU.hdl
+
+/**
+ * The ALU (Arithmetic Logic Unit).
+ * Computes one of the following functions:
+ * x+y, x-y, y-x, 0, 1, -1, x, y, -x, -y, !x, !y,
+ * x+1, y+1, x-1, y-1, x&y, x|y on two 16-bit inputs, 
+ * according to 6 input bits denoted zx,nx,zy,ny,f,no.
+ * In addition, the ALU computes two 1-bit outputs:
+ * if the ALU output == 0, zr is set to 1; otherwise zr is set to 0;
+ * if the ALU output < 0, ng is set to 1; otherwise ng is set to 0.
+ */
+
+// Implementation: the ALU logic manipulates the x and y inputs
+// and operates on the resulting values, as follows:
+// if (zx == 1) set x = 0        // 16-bit constant
+// if (nx == 1) set x = !x       // bitwise not
+// if (zy == 1) set y = 0        // 16-bit constant
+// if (ny == 1) set y = !y       // bitwise not
+// if (f == 1)  set out = x + y  // integer 2's complement addition
+// if (f == 0)  set out = x & y  // bitwise and
+// if (no == 1) set out = !out   // bitwise not
+// if (out == 0) set zr = 1
+// if (out < 0) set ng = 1
+
+CHIP ALU {
+    IN  
+        x[16], y[16],  // 16-bit inputs        
+        zx, // zero the x input?
+        nx, // negate the x input?
+        zy, // zero the y input?
+        ny, // negate the y input?
+        f,  // compute out = x + y (if 1) or x & y (if 0)
+        no; // negate the out output?
+
+    OUT 
+        out[16], // 16-bit output
+        zr, // 1 if (out == 0), 0 otherwise
+        ng; // 1 if (out < 0),  0 otherwise
+
+    PARTS:
+    // Put you code here:
+    Not(in=zx, out=notzx);
+    And16(a=x, b[0]=notzx, b[1]=notzx, b[2]=notzx, b[3]=notzx, b[4]=notzx, b[5]=notzx, b[6]=notzx, b[7]=notzx, b[8]=notzx, b[9]=notzx, b[10]=notzx, b[11]=notzx, b[12]=notzx, b[13]=notzx, b[14]=notzx, b[15]=notzx, out[0..15]=zxout);
+
+    Not(in=zy, out=notzy);
+    And16(a=y, b[0]=notzy, b[1]=notzy, b[2]=notzy, b[3]=notzy, b[4]=notzy, b[5]=notzy, b[6]=notzy, b[7]=notzy, b[8]=notzy, b[9]=notzy, b[10]=notzy, b[11]=notzy, b[12]=notzy, b[13]=notzy, b[14]=notzy, b[15]=notzy, out[0..15]=zyout);
+
+    Not(in=nx, out=notnx);
+    And16(a=zxout, b[0]=notnx, b[1]=notnx, b[2]=notnx, b[3]=notnx, b[4]=notnx, b[5]=notnx, b[6]=notnx, b[7]=notnx, b[8]=notnx, b[9]=notnx, b[10]=notnx, b[11]=notnx, b[12]=notnx, b[13]=notnx, b[14]=notnx, b[15]=notnx, out=nxout1);
+    Not16(in=zxout, out=notx);
+    And16(a[0]=nx, a[1]=nx, a[2]=nx, a[3]=nx, a[4]=nx, a[5]=nx, a[6]=nx, a[7]=nx, a[8]=nx, a[9]=nx, a[10]=nx, a[11]=nx, a[12]=nx, a[13]=nx, a[14]=nx, a[15]=nx, b=notx, out=nxout2);
+    Or16(a=nxout1, b=nxout2, out=nxout);
+
+    Not(in=ny, out=notny);
+    And16(a=zyout, b[0]=notny, b[1]=notny, b[2]=notny, b[3]=notny, b[4]=notny, b[5]=notny, b[6]=notny, b[7]=notny, b[8]=notny, b[9]=notny, b[10]=notny, b[11]=notny, b[12]=notny, b[13]=notny, b[14]=notny, b[15]=notny, out=nyout1);
+    Not16(in=zyout, out=noty);
+    And16(a[0]=ny, a[1]=ny, a[2]=ny, a[3]=ny, a[4]=ny, a[5]=ny, a[6]=ny, a[7]=ny, a[8]=ny, a[9]=ny, a[10]=ny, a[11]=ny, a[12]=ny, a[13]=ny, a[14]=ny, a[15]=ny, b=noty, out=nyout2);
+    Or16(a=nyout1, b=nyout2, out=nyout);
+
+    And16(a=nxout, b=nyout, out=fand);
+    Add16(a=nxout, b=nyout, out=fadd);
+    And16(a[0]=f, a[1]=f, a[2]=f, a[3]=f, a[4]=f, a[5]=f, a[6]=f, a[7]=f, a[8]=f, a[9]=f, a[10]=f, a[11]=f, a[12]=f, a[13]=f, a[14]=f, a[15]=f, b=fadd, out=fout1);
+    Not(in=f, out=notf);
+    And16(a[0]=notf, a[1]=notf, a[2]=notf, a[3]=notf, a[4]=notf, a[5]=notf, a[6]=notf, a[7]=notf, a[8]=notf, a[9]=notf, a[10]=notf, a[11]=notf, a[12]=notf, a[13]=notf, a[14]=notf, a[15]=notf, b=fand, out=fout2);
+    Or16(a=fout1, b=fout2, out=fout);
+
+    Not16(in=fout, out=notfout);
+    Not(in=no, out=notno);
+    And16(a[0]=no, a[1]=no, a[2]=no, a[3]=no, a[4]=no, a[5]=no, a[6]=no, a[7]=no, a[8]=no, a[9]=no, a[10]=no, a[11]=no, a[12]=no, a[13]=no, a[14]=no, a[15]=no, b=notfout, out=postOut1);
+    And16(a[0]=notno, a[1]=notno, a[2]=notno, a[3]=notno, a[4]=notno, a[5]=notno, a[6]=notno, a[7]=notno, a[8]=notno, a[9]=notno, a[10]=notno, a[11]=notno, a[12]=notno, a[13]=notno, a[14]=notno, a[15]=notno, b=fout, out=postOut2);
+    Or16(a=postOut1, b=postOut2, out=out);
+    Or16(a=postOut1, b=postOut2, out[0..7]=postOut07);
+    Or16(a=postOut1, b=postOut2, out[8..15]=postOut815);
+    Or16(a=postOut1, b=postOut2, out[15]=postOut15);
+
+    Or8Way(in=postOut07, out=zrOr1);
+    Or8Way(in=postOut815, out=zrOr2);
+    Or(a=zrOr1, b=zrOr2, out=zrOr);
+    Not(in=zrOr, out=zr);
+
+    And(a=postOut15, b=true, out=ng);
+}
