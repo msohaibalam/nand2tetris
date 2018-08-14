@@ -8,9 +8,11 @@ class CodeWriter:
         # just perform the logic of the recommended setFileName constructor here
         ind1 = path.find('/')
         ind2 = path.find('.')
-        writefile = path[:ind1] + "/" + path[ind1+1:ind2]
-        self.filename = writefile + '.asm'
+        self.writefile = path[:ind1] + "/" + path[ind1+1:ind2]
+        self.filename = self.writefile + '.asm'
         self.file = open(self.filename, 'w')
+        self.writefile_ind = self.writefile.rfind('/')
+        self.static_var = self.writefile[self.writefile_ind + 1:]   # useful in declaring static variables
 
     def writePushPop(self):   # no need to pass in command as an argument
         assert self.parser.commandType() in ['C_PUSH', 'C_POP']
@@ -52,6 +54,14 @@ class CodeWriter:
                     self.file.write('@SP\n')
                     self.file.write('A=M\n')
                     self.file.write('M=D\n')
+                elif arg1 == 'static':
+                    # declare a new symbol file.j in "push static j"
+                    self.file.write('@%s.%s\n' % (self.static_var, arg2))
+                    self.file.write('D=M\n')
+                    # push D's value to the stack
+                    self.file.write('@SP\n')
+                    self.file.write('A=M\n')
+                    self.file.write('M=D\n')
                 else:
                     # TODO
                     pass
@@ -64,38 +74,47 @@ class CodeWriter:
             # use general purpose RAM[13] to store the value of 'segment_base_address + index'
             self.file.write('@%s\n' % arg2)
             self.file.write('D=A\n')
-            if arg1 == 'local':
-                self.file.write('@LCL\n')
-                self.file.write('D=D+M\n')
-            elif arg1 == 'argument':
-                self.file.write('@ARG\n')
-                self.file.write('D=D+M\n')
-            elif arg1 == 'this':
-                self.file.write('@THIS\n')
-                self.file.write('D=D+M\n')
-            elif arg1 == 'that':
-                self.file.write('@THAT\n')
-                self.file.write('D=D+M\n')
-            elif arg1 == 'temp':
-                self.file.write('@5\n')
-                self.file.write('D=D+A\n')
-            elif arg1 == 'pointer':
-                self.file.write('@3\n')
-                self.file.write('D=D+A\n')
-            else:
-                # TODO
-                pass
-            # self.file.write('D=D+M\n')
-            self.file.write('@13\n')      # general purpose register
-            self.file.write('M=D\n')
-            self.file.write('@SP\n')
-            self.file.write('A=M-1\n')
-            self.file.write('D=M\n')        # pop command
-            self.file.write('@13\n')
-            self.file.write('A=M\n')
-            self.file.write('M=D\n')
-            self.file.write('@SP\n')
-            self.file.write('M=M-1\n')
+            if arg1 in ['temp', 'pointer', 'local', 'argument', 'this', 'that']:
+                if arg1 == 'local':
+                    self.file.write('@LCL\n')
+                    self.file.write('D=D+M\n')
+                elif arg1 == 'argument':
+                    self.file.write('@ARG\n')
+                    self.file.write('D=D+M\n')
+                elif arg1 == 'this':
+                    self.file.write('@THIS\n')
+                    self.file.write('D=D+M\n')
+                elif arg1 == 'that':
+                    self.file.write('@THAT\n')
+                    self.file.write('D=D+M\n')
+                elif arg1 == 'temp':
+                    self.file.write('@5\n')
+                    self.file.write('D=D+A\n')
+                elif arg1 == 'pointer':
+                    self.file.write('@3\n')
+                    self.file.write('D=D+A\n')
+                else:
+                    # TODO
+                    pass
+                # self.file.write('D=D+M\n')
+                self.file.write('@13\n')      # general purpose register
+                self.file.write('M=D\n')
+                self.file.write('@SP\n')
+                self.file.write('A=M-1\n')
+                self.file.write('D=M\n')        # pop command
+                self.file.write('@13\n')
+                self.file.write('A=M\n')
+                self.file.write('M=D\n')        # write to appropriate address
+                self.file.write('@SP\n')
+                self.file.write('M=M-1\n')      # adjust address of stack top
+            elif arg1 == 'static':
+                self.file.write('@SP\n')
+                self.file.write('A=M-1\n')
+                self.file.write('D=M\n')    # pop command
+                self.file.write('@%s.%s\n' % (self.static_var, arg2))
+                self.file.write('M=D\n')    # write to appropriate address
+                self.file.write('@SP\n')
+                self.file.write('M=M-1\n')      # adjust address of stack top
         else:
             # TODO
             pass
@@ -273,6 +292,8 @@ class CodeWriter:
 
 
 if __name__ == "__main__":
-    for path in ["StackArithmetic/SimpleAdd/SimpleAdd.vm", "StackArithmetic/StackTest/StackTest.vm", "MemoryAccess/BasicTest/BasicTest.vm"]:
+    for path in ["StackArithmetic/SimpleAdd/SimpleAdd.vm", "StackArithmetic/StackTest/StackTest.vm",
+                 "MemoryAccess/BasicTest/BasicTest.vm", "MemoryAccess/PointerTest/PointerTest.vm",
+                 "MemoryAccess/StaticTest/StaticTest.vm"]:
         codewriter = CodeWriter(path)
         codewriter.createOutput()
