@@ -36,24 +36,30 @@ class CodeWriter:
                     # else:
                     #     # TODO
                     #     pass
-                elif arg1 in ['temp', 'pointer', 'local', 'arg', 'this', 'that']:
+                elif arg1 in ['temp', 'pointer', 'local', 'argument', 'this', 'that']:
                     self.file.write('@%s\n' % arg2)
                     self.file.write('D=A\n')
                     if arg1 == 'temp':
                         self.file.write('@5\n')
+                        self.file.write('A=D+A\n')
                     elif arg1 == 'pointer':
                         self.file.write('@3\n')
+                        self.file.write('A=D+A\n')
                     elif arg1 == 'local':
                         self.file.write('@LCL\n')
+                        self.file.write('A=D+M\n')
                     elif arg1 == 'argument':
                         self.file.write('@ARG\n')
+                        self.file.write('A=D+M\n')
                     elif arg1 == 'this':
                         self.file.write('@THIS\n')
+                        self.file.write('A=D+M\n')
                     elif arg1 == 'that':
                         self.file.write('@THAT\n')
+                        self.file.write('A=D+M\n')
                     else:
                         pass
-                    self.file.write('A=D+A\n')
+                    # self.file.write('A=D+A\n')
                     self.file.write('D=M\n')
                     self.file.write('@SP\n')
                     self.file.write('A=M\n')
