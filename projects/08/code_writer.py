@@ -313,11 +313,171 @@ class CodeWriter:
         self.file.write('@SP\n')
         self.file.write('A=M-1\n')
         self.file.write('D=M\n')
+        self.file.write('@SP\n')    # adjust stack top
+        self.file.write('M=M-1\n')
         self.file.write('@%s\n' % label_name)
         self.file.write('D;JNE\n')
 
+    def writeFunction(self):
+        func_name = self.parser.arg1()
+        self.function_list.append(func_name)
+        num_locals = self.parser.arg2()
+        self.file.write('(%s)\n' % func_name)
+        self.file.write('@%s\n'  % num_locals)
+        self.file.write('D=A\n')
+        self.file.write('@13\n')
+        self.file.write('M=D\n')
+        self.file.write('(LOOP_%s)\n' % func_name)
+        self.file.write('@13\n')
+        self.file.write('D=M\n')
+        self.file.write('@END_%s\n' % func_name)
+        self.file.write('D;JEQ\n')
+        # start logic for code to carry out while D != 0
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=0\n')    # M[M[base_address]] = 7
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')  # M[base_address] = M[base_address] + 1
+        self.file.write('@13\n')
+        self.file.write('M=M-1\n')
+        # end logic for code to carry out while D != 0
+        self.file.write('@LOOP_%s\n' % func_name)
+        self.file.write('0;JMP\n')
+        self.file.write('(END_%s)\n' % func_name)
+
+    def writeReturn(self):
+        func_name = self.function_list.pop()
+        ## FRAME = LCL : store FRAME in a temp variable
+        self.file.write('@LCL\n')
+        self.file.write('D=M\n')
+        self.file.write('@13\n')     # address of the temp variable FRAME
+        self.file.write('M=D\n')
+        ## RET = *(FRAME - 5) : store return address in another temp variable
+        self.file.write('@13\n')
+        self.file.write('D=M\n')
+        self.file.write('@5\n')
+        self.file.write('D=D-A\n')
+        self.file.write('A=D\n')
+        self.file.write('D=M\n')    # D now equals *(FRAME - 5)
+        self.file.write('@14\n')     # address of the temp variable RET
+        self.file.write('M=D\n')
+        ## *ARG = pop()
+        self.file.write('@SP\n')
+        self.file.write('A=M-1\n')
+        self.file.write('D=M\n')
+        self.file.write('@ARG\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        ## SP = ARG + 1
+        self.file.write('@ARG\n')
+        self.file.write('D=M+1\n')
+        self.file.write('@SP\n')
+        self.file.write('M=D\n')
+        ## THAT = *(FRAME - 1)
+        self.file.write('@13\n')
+        self.file.write('A=M-1\n')
+        self.file.write('D=M\n')
+        self.file.write('@THAT\n')
+        self.file.write('M=D\n')
+        ## THIS = *(FRAME - 2)
+        self.file.write('@13\n')
+        self.file.write('D=M\n')
+        self.file.write('@2\n')
+        self.file.write('A=D-A\n')
+        self.file.write('D=M\n')
+        self.file.write('@THIS\n')
+        self.file.write('M=D\n')
+        ## ARG = *(FRAME - 3)
+        self.file.write('@13\n')
+        self.file.write('D=M\n')
+        self.file.write('@3\n')
+        self.file.write('A=D-A\n')
+        self.file.write('D=M\n')
+        self.file.write('@ARG\n')
+        self.file.write('M=D\n')
+        ## LCL = *(FRAME - 4)
+        self.file.write('@13\n')
+        self.file.write('D=M\n')
+        self.file.write('@4\n')
+        self.file.write('A=D-A\n')
+        self.file.write('D=M\n')
+        self.file.write('@LCL\n')
+        self.file.write('M=D\n')
+        ## goto RET
+        self.file.write('@14\n')     # address of RET
+        self.file.write('A=M\n')    # address = RET
+        self.file.write('0;JMP\n')
+
+    def writeCall(self):
+        func_name = self.parser.arg1()
+        num_args = self.parser.arg2()
+        # push return-address (using label declared below)
+        s = 'RETURN_ADDRESS_' + str(self.parser.i)  # there could be more than one return_addresses in the entire code
+        self.file.write('@%s\n' % s)
+        self.file.write('D=A\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push LCL
+        self.file.write('@LCL\n')
+        self.file.write('A=M\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push ARG
+        self.file.write('@ARG\n')
+        self.file.write('A=M\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push THIS
+        self.file.write('@THIS\n')
+        self.file.write('A=M\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push THAT
+        self.file.write('@THAT\n')
+        self.file.write('A=M\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # ARG = SP - n - 5
+        self.file.write('@SP\n')
+        self.file.write('D=M\n')
+        self.file.write('@%s\n' % num_args)
+        self.file.write('D=D-A\n')
+        self.file.write('@5\n')
+        self.file.write('D=D-A\n')
+        self.file.write('@ARG\n')
+        self.file.write('M=D\n')
+        # LCL = SP
+        self.file.write('@SP\n')
+        self.file.write('D=M\n')
+        self.file.write('@LCL\n')
+        self.file.write('M=D\n')
+        # goto f
+        self.file.write('@%s\n' % func_name)
+        self.file.write('0;JMP\n')
+        # declare a label for the return-address
+        self.file.write('(%s)\n' % s)
+
     def createOutput(self):
-        self.writeInit()
+        # self.writeInit()
         self.parser.i = -1
         while self.parser.hasMoreCommands():
             self.parser.advance()
@@ -327,20 +487,24 @@ class CodeWriter:
             elif c_type == 'C_ARITHMETIC':
                 self.writeArithmetic()
             elif c_type == 'C_FUNCTION':
-                func_name = self.parser.arg1()
-                self.function_list.append(func_name)
+                self.writeFunction()
             elif c_type == 'C_LABEL':
                 self.writeLabel()
             elif c_type == 'C_GOTO':
                 self.writeGoto()
             elif c_type == 'C_IF':
                 self.writeIf()
+            elif c_type == 'C_RETURN':
+                self.writeReturn()
+            elif c_type == 'C_CALL':
+                self.writeCall()
 
         # close file
         self.file.close()
 
 
 if __name__ == "__main__":
-    for path in ["ProgramFlow/BasicLoop/BasicLoop.vm"]:
+    for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
+                 "FunctionCalls/SimpleFunction/SimpleFunction.vm"]:
         codewriter = CodeWriter(path)
         codewriter.createOutput()
