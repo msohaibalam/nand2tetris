@@ -85,11 +85,10 @@ class Parser:
         elif self.commandType() == 'C_CALL':
             # call functionName nArgs
             s = self.command.split('call')[1]
-            for ch in s:
-                if ch.isdigit():
-                    ind = s.index(ch)
-                    break
-            return s[:ind]
+            for i, ch in enumerate(s):
+                if not ch.isdigit():
+                    ind = i
+            return s[:ind+1]
         elif self.commandType() == 'C_LABEL':
             # label symbol
             return self.command.split('label')[1]
@@ -105,9 +104,21 @@ class Parser:
             raise ValueError("Unrecognized command type when trying to obtain arg1")
 
     def arg2(self):
-        if self.commandType() in ['C_PUSH', 'C_POP', 'C_FUNCTION', 'C_CALL']:
+        if self.commandType() in ['C_PUSH', 'C_POP']:
             for ch in self.command:
                 if ch.isdigit():
                     ind = self.command.index(ch)
                     break
             return self.command[ind:]
+        elif self.commandType() == 'C_FUNCTION':
+            s = self.command.split('function')[1]
+            for i, ch in enumerate(s):
+                if not ch.isdigit():
+                    ind = i
+            return s[ind+1:]
+        elif self.commandType() == 'C_CALL':
+            s = self.command.split('call')[1]
+            for i, ch in enumerate(s):
+                if not ch.isdigit():
+                    ind = i
+            return s[ind+1:]

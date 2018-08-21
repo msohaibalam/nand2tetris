@@ -36,6 +36,7 @@ class CodeWriter:
         arg1 = self.parser.arg1()
         arg2 = self.parser.arg2()
         if self.parser.commandType() == 'C_PUSH':
+                self.file.write('// push %s %s\n' % (arg1, arg2))
                 # stack operation
                 if arg1 == 'constant':
                     # e.g. push constant 7
@@ -73,8 +74,9 @@ class CodeWriter:
                     self.file.write('M=D\n')
                 elif arg1 == 'static':
                     # declare a new symbol file.j in "push static j"
+                    self.file.write('// push static %s' % arg2)
                     if self.isfile:
-                        self.file.write('@%s.%s\n' % (self.static_var + str(self.parser.i), arg2))
+                        self.file.write('@%s.%s\n' % (self.static_var, arg2))
                     else:
                         self.file.write('@%s.%s\n' % (self.static_var_dict[self.parser.i], arg2))
                     self.file.write('D=M\n')
@@ -92,6 +94,7 @@ class CodeWriter:
         elif self.parser.commandType() == 'C_POP':
             # pop the stack value and store it in segment[index]
             # use general purpose RAM[13] to store the value of 'segment_base_address + index'
+            self.file.write('// pop %s %s\n' % (arg1, arg2))
             self.file.write('@%s\n' % arg2)
             self.file.write('D=A\n')
             if arg1 in ['temp', 'pointer', 'local', 'argument', 'this', 'that']:
@@ -132,7 +135,7 @@ class CodeWriter:
                 self.file.write('A=M-1\n')
                 self.file.write('D=M\n')    # pop command
                 if self.isfile:
-                    self.file.write('@%s.%s\n' % (self.static_var + str(self.parser.i), arg2))
+                    self.file.write('@%s.%s\n' % (self.static_var, arg2))
                 else:
                     self.file.write('@%s.%s\n' % (self.static_var_dict[self.parser.i], arg2))
                 self.file.write('M=D\n')    # write to appropriate address
@@ -146,6 +149,7 @@ class CodeWriter:
 
         assert self.parser.commandType() == 'C_ARITHMETIC'
         command = self.parser.arg1()
+        self.file.write('// %s\n' % command)
 
         if command == 'add':
             # stack operation
@@ -277,6 +281,7 @@ class CodeWriter:
             raise ValueError("Unrecognized command for C_ARITHMETIC command type")
 
     def writeInit(self):
+        self.file.write('// init\n')
         # initially set the SP address to 256 (the address for the stack)
         self.file.write('@256\n')
         self.file.write('D=A\n')
@@ -304,6 +309,7 @@ class CodeWriter:
         self.file.write('M=D\n')
 
     def writeLabel(self):
+        self.file.write('// label\n')
         # check if label was declared within function; if so, label should carry function name
         try:
             func_name = self.function_list[-1] + "$"
@@ -314,6 +320,7 @@ class CodeWriter:
         self.file.write('(%s)\n' % label_name)
 
     def writeGoto(self):
+        self.file.write('// goto\n')
         # check if goto was declared within function; if so, label should carry function name
         try:
             func_name = self.function_list[-1] + "$"
@@ -325,6 +332,7 @@ class CodeWriter:
         self.file.write('0;JMP\n')
 
     def writeIf(self):
+        self.file.write('// if-goto\n')
         # check if 'if-goto' was declared within function; if so, label should carry function name
         try:
             func_name = self.function_list[-1] + "$"
@@ -344,6 +352,7 @@ class CodeWriter:
         func_name = self.parser.arg1()
         self.function_list.append(func_name)
         num_locals = self.parser.arg2()
+        self.file.write('// function %s %s\n' % (func_name, num_locals))
         self.file.write('(%s)\n' % func_name)
         self.file.write('@%s\n'  % num_locals)
         self.file.write('D=A\n')
@@ -368,6 +377,7 @@ class CodeWriter:
         self.file.write('(END_%s)\n' % func_name)
 
     def writeReturn(self):
+        self.file.write('// return\n')
         # func_name = self.function_list.pop()
         ## FRAME = LCL : store FRAME in a temp variable
         self.file.write('@LCL\n')
@@ -435,7 +445,9 @@ class CodeWriter:
     def writeCall(self):
         func_name = self.parser.arg1()
         num_args = self.parser.arg2()
+        self.file.write('// call %s %s\n' % (func_name, num_args))
         # push return-address (using label declared below)
+        self.file.write('// call : push return-address\n')
         s = 'RETURN_ADDRESS_' + str(self.parser.i)  # there could be more than one return_addresses in the entire code
         self.file.write('@%s\n' % s)
         self.file.write('D=A\n')
@@ -445,8 +457,8 @@ class CodeWriter:
         self.file.write('@SP\n')
         self.file.write('M=M+1\n')
         # push LCL
+        self.file.write('// call : push LCL\n')
         self.file.write('@LCL\n')
-        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -454,8 +466,8 @@ class CodeWriter:
         self.file.write('@SP\n')
         self.file.write('M=M+1\n')
         # push ARG
+        self.file.write('// call : push ARG\n')
         self.file.write('@ARG\n')
-        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -463,8 +475,8 @@ class CodeWriter:
         self.file.write('@SP\n')
         self.file.write('M=M+1\n')
         # push THIS
+        self.file.write('// call : push THIS\n')
         self.file.write('@THIS\n')
-        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -472,8 +484,8 @@ class CodeWriter:
         self.file.write('@SP\n')
         self.file.write('M=M+1\n')
         # push THAT
+        self.file.write('// call : push THAT\n')
         self.file.write('@THAT\n')
-        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -481,6 +493,7 @@ class CodeWriter:
         self.file.write('@SP\n')
         self.file.write('M=M+1\n')
         # ARG = SP - n - 5
+        self.file.write('// call : ARG = SP - n - 5\n')
         self.file.write('@SP\n')
         self.file.write('D=M\n')
         self.file.write('@%s\n' % num_args)
@@ -490,17 +503,21 @@ class CodeWriter:
         self.file.write('@ARG\n')
         self.file.write('M=D\n')
         # LCL = SP
+        self.file.write('// call : LCL = SP\n')
         self.file.write('@SP\n')
         self.file.write('D=M\n')
         self.file.write('@LCL\n')
         self.file.write('M=D\n')
         # goto f
+        self.file.write('// call : goto f\n')
         self.file.write('@%s\n' % func_name)
         self.file.write('0;JMP\n')
         # declare a label for the return-address
+        self.file.write('// call : declare label for return-address\n')
         self.file.write('(%s)\n' % s)
 
     def writeInit(self):
+        self.file.write('// init\n')
         # initially set the SP address to 256 (the address for the stack)
         self.file.write('@256\n')
         self.file.write('D=A\n')
@@ -528,6 +545,7 @@ class CodeWriter:
         self.file.write('M=D\n')
 
     def writeBootstrap(self):
+        self.file.write('// boostrap\n')
         ## SP = 256
         self.file.write('@256\n')
         self.file.write('D=A\n')
@@ -626,14 +644,14 @@ class CodeWriter:
 
 
 if __name__ == "__main__":
-    for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
-                 "FunctionCalls/SimpleFunction/SimpleFunction.vm",
-                 "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
+    # for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
+    #              "FunctionCalls/SimpleFunction/SimpleFunction.vm",
+    #              "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
     # for path in ["FunctionCalls/StaticsTest/test_statics_test.vm"]:
     # for path in ["FunctionCalls/test_function_fibonacci.vm", "FunctionCalls/test_function_call_Sysinit.vm",
     #              "FunctionCalls/test_function_call.vm"]:
     # for path in ["FunctionCalls/test_function_fibonacci.vm"]:
-    # for path in ["FunctionCalls/StaticsTest"]:
+    for path in ["FunctionCalls/StaticsTest"]:
         if os.path.isdir(path):
             # handle the case where input path is a folder
             files = [file_ for file_ in os.listdir(path) if file_.endswith(".vm")]
@@ -642,17 +660,30 @@ if __name__ == "__main__":
                 f_input = path + '/%s' % f
                 d_file_codewriter[f] = CodeWriter(f_input, False)
             codewriter = d_file_codewriter['Sys.vm']
+            tot_lines_sys = d_file_codewriter['Sys.vm'].parser.total_commands
             count_f = 0
             for f in files:
                 if f != 'Sys.vm':
                     if count_f == 0:
                         codewriter.static_var_dict = {i: f for i in range(d_file_codewriter[f].parser.total_commands)}
+                        prev_counts = d_file_codewriter[f].parser.total_commands
                     else:
-                        new_dict = {i + len(codewriter.static_var_dict): f for i in range(d_file_codewriter[f].parser.total_commands)}
+                        # new_dict = {i + len(codewriter.static_var_dict): f for i in range(d_file_codewriter[f].parser.total_commands)}
+                        new_dict = {i + prev_counts: f for i in range(d_file_codewriter[f].parser.total_commands)}
                         codewriter.static_var_dict.update(new_dict)
-                    codewriter.parser.clean_lines = d_file_codewriter[f].parser.clean_lines + codewriter.parser.clean_lines
+                        prev_counts += d_file_codewriter[f].parser.total_commands
+                    codewriter.parser.clean_lines = codewriter.parser.clean_lines + d_file_codewriter[f].parser.clean_lines 
                     codewriter.parser.total_commands = len(codewriter.parser.clean_lines)
                     count_f += 1
+            # post-processing of clean_lines
+            # print ('tot_lines_sys: ', tot_lines_sys)
+            codewriter.parser.clean_lines = codewriter.parser.clean_lines[tot_lines_sys:] + codewriter.parser.clean_lines[:tot_lines_sys]
+            # for l in codewriter.parser.clean_lines:
+            #     print (l)
+            # print ("*" * 30)
+            # print (codewriter.static_var_dict)
+            # for k, v in codewriter.static_var_dict.items():
+            #     print (k, ": ", v)
         elif os.path.isfile(path):
             # handle the case where input path is a file
             codewriter = CodeWriter(path)
