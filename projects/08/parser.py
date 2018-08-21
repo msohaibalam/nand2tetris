@@ -78,11 +78,10 @@ class Parser:
         elif self.commandType() == 'C_FUNCTION':
             # function functionName nLocals
             s = self.command.split('function')[1]
-            for ch in s:
-                if ch.isdigit():
-                    ind = s.index(ch)
-                    break
-            return s[:ind]
+            for i, ch in enumerate(s):
+                if not ch.isdigit():
+                    ind = i
+            return s[:ind+1]
         elif self.commandType() == 'C_CALL':
             # call functionName nArgs
             s = self.command.split('call')[1]

@@ -598,8 +598,8 @@ class CodeWriter:
         if not self.isfile:
             self.writeBootstrap()
         else:
-            # pass
-            self.writeBootstrap()
+            pass
+            # self.writeBootstrap()
         self.parser.i = -1
         while self.parser.hasMoreCommands():
             self.parser.advance()
@@ -626,10 +626,10 @@ class CodeWriter:
 
 
 if __name__ == "__main__":
-    # for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
-    #              "FunctionCalls/SimpleFunction/SimpleFunction.vm",
-    #              "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
-    for path in ["FunctionCalls/StaticsTest/test_statics_test.vm"]:
+    for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
+                 "FunctionCalls/SimpleFunction/SimpleFunction.vm",
+                 "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
+    # for path in ["FunctionCalls/StaticsTest/test_statics_test.vm"]:
     # for path in ["FunctionCalls/test_function_fibonacci.vm", "FunctionCalls/test_function_call_Sysinit.vm",
     #              "FunctionCalls/test_function_call.vm"]:
     # for path in ["FunctionCalls/test_function_fibonacci.vm"]:
@@ -653,9 +653,6 @@ if __name__ == "__main__":
                     codewriter.parser.clean_lines = d_file_codewriter[f].parser.clean_lines + codewriter.parser.clean_lines
                     codewriter.parser.total_commands = len(codewriter.parser.clean_lines)
                     count_f += 1
-            if path == "FunctionCalls/StaticsTest":
-                for l in codewriter.parser.clean_lines:
-                    print (l)
         elif os.path.isfile(path):
             # handle the case where input path is a file
             codewriter = CodeWriter(path)
