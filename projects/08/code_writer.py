@@ -1,19 +1,35 @@
+import os
 from parser import Parser
 
 
 class CodeWriter:
 
-    def __init__(self, path):
-        self.parser = Parser(path)
+    def __init__(self, filepath, isfile=True):
+        self.parser = Parser(filepath)
+        self.isfile = isfile
         # just perform the logic of the recommended setFileName constructor here
-        ind1 = path.find('/')
-        ind2 = path.find('.')
-        self.writefile = path[:ind1] + "/" + path[ind1+1:ind2]
-        self.filename = self.writefile + '.asm'
-        self.file = open(self.filename, 'w')
-        self.writefile_ind = self.writefile.rfind('/')
-        self.static_var = self.writefile[self.writefile_ind + 1:]   # useful in declaring static variables
-        self.function_list = []
+        if self.isfile:
+            ind1 = path.find('/')
+            ind2 = path.find('.')
+            self.writefile = path[:ind1] + "/" + path[ind1+1:ind2]
+            self.filename = self.writefile + '.asm'
+            self.file = open(self.filename, 'w')
+            self.writefile_ind = self.writefile.rfind('/')
+            self.static_var = self.writefile[self.writefile_ind + 1:]   # useful in declaring static variables
+            self.function_list = []
+        else:
+            inds = [i for i, x in enumerate(filepath) if x == '/']
+            self.writefolder = path[inds[-2]+1:inds[-1]]
+            self.filename = self.writefolder + '.asm'
+            writefile_ind = filepath.rfind('/')
+            filepath_ = filepath[:writefile_ind]
+            self.file = open(filepath_ + '/' + self.filename, 'w')
+            self.static_var_dict = {}
+            self.static_var = self.writefolder   # useful in declaring static variables
+            # # print ('self.writefile: ', self.writefile)
+            # self.writefile_ind = self.writefile.rfind('/')
+            # # print ('self.writefile[self.writefile_ind + 1:]: ', self.writefile[self.writefile_ind + 1:])
+            self.function_list = []
 
     def writePushPop(self):   # no need to pass in command as an argument
         assert self.parser.commandType() in ['C_PUSH', 'C_POP']
@@ -57,7 +73,10 @@ class CodeWriter:
                     self.file.write('M=D\n')
                 elif arg1 == 'static':
                     # declare a new symbol file.j in "push static j"
-                    self.file.write('@%s.%s\n' % (self.static_var, arg2))
+                    if self.isfile:
+                        self.file.write('@%s.%s\n' % (self.static_var + str(self.parser.i), arg2))
+                    else:
+                        self.file.write('@%s.%s\n' % (self.static_var_dict[self.parser.i], arg2))
                     self.file.write('D=M\n')
                     # push D's value to the stack
                     self.file.write('@SP\n')
@@ -112,7 +131,10 @@ class CodeWriter:
                 self.file.write('@SP\n')
                 self.file.write('A=M-1\n')
                 self.file.write('D=M\n')    # pop command
-                self.file.write('@%s.%s\n' % (self.static_var, arg2))
+                if self.isfile:
+                    self.file.write('@%s.%s\n' % (self.static_var + str(self.parser.i), arg2))
+                else:
+                    self.file.write('@%s.%s\n' % (self.static_var_dict[self.parser.i], arg2))
                 self.file.write('M=D\n')    # write to appropriate address
                 self.file.write('@SP\n')
                 self.file.write('M=M-1\n')      # adjust address of stack top
@@ -346,7 +368,7 @@ class CodeWriter:
         self.file.write('(END_%s)\n' % func_name)
 
     def writeReturn(self):
-        func_name = self.function_list.pop()
+        # func_name = self.function_list.pop()
         ## FRAME = LCL : store FRAME in a temp variable
         self.file.write('@LCL\n')
         self.file.write('D=M\n')
@@ -368,6 +390,8 @@ class CodeWriter:
         self.file.write('@ARG\n')
         self.file.write('A=M\n')
         self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M-1\n')
         ## SP = ARG + 1
         self.file.write('@ARG\n')
         self.file.write('D=M+1\n')
@@ -422,7 +446,7 @@ class CodeWriter:
         self.file.write('M=M+1\n')
         # push LCL
         self.file.write('@LCL\n')
-        self.file.write('A=M\n')
+        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -431,7 +455,7 @@ class CodeWriter:
         self.file.write('M=M+1\n')
         # push ARG
         self.file.write('@ARG\n')
-        self.file.write('A=M\n')
+        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -440,7 +464,7 @@ class CodeWriter:
         self.file.write('M=M+1\n')
         # push THIS
         self.file.write('@THIS\n')
-        self.file.write('A=M\n')
+        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -449,7 +473,7 @@ class CodeWriter:
         self.file.write('M=M+1\n')
         # push THAT
         self.file.write('@THAT\n')
-        self.file.write('A=M\n')
+        # self.file.write('A=M\n')
         self.file.write('D=M\n')
         self.file.write('@SP\n')
         self.file.write('A=M\n')
@@ -476,8 +500,106 @@ class CodeWriter:
         # declare a label for the return-address
         self.file.write('(%s)\n' % s)
 
+    def writeInit(self):
+        # initially set the SP address to 256 (the address for the stack)
+        self.file.write('@256\n')
+        self.file.write('D=A\n')
+        self.file.write('@SP\n')
+        self.file.write('M=D\n')
+        # set the local address to 300
+        self.file.write('@300\n')
+        self.file.write('D=A\n')
+        self.file.write('@LCL\n')
+        self.file.write('M=D\n')
+        # set the argument address to 400
+        self.file.write('@400\n')
+        self.file.write('D=A\n')
+        self.file.write('@ARG\n')
+        self.file.write('M=D\n')
+        # set the this address to 3000
+        self.file.write('@3000\n')
+        self.file.write('D=A\n')
+        self.file.write('@THIS\n')
+        self.file.write('M=D\n')
+        # set the that address to 3010
+        self.file.write('@3010\n')
+        self.file.write('D=A\n')
+        self.file.write('@THAT\n')
+        self.file.write('M=D\n')
+
+    def writeBootstrap(self):
+        ## SP = 256
+        self.file.write('@256\n')
+        self.file.write('D=A\n')
+        self.file.write('@SP\n')
+        self.file.write('M=D\n')
+        ## call Sys.init : call Sys.init 0
+        # push return-address
+        sys_init_ret_add = 'return-address-sysinit'
+        self.file.write('@%s\n' % sys_init_ret_add)
+        self.file.write('D=A\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push LCL
+        self.file.write('@LCL\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push ARG
+        self.file.write('@ARG\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push THIS
+        self.file.write('@THIS\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # push THAT
+        self.file.write('@THAT\n')
+        self.file.write('D=M\n')
+        self.file.write('@SP\n')
+        self.file.write('A=M\n')
+        self.file.write('M=D\n')
+        self.file.write('@SP\n')
+        self.file.write('M=M+1\n')
+        # ARG = SP - n - 5
+        self.file.write('@SP\n')
+        self.file.write('D=M\n')
+        self.file.write('@5\n')
+        self.file.write('D=D-A\n')
+        self.file.write('@ARG\n')
+        self.file.write('M=D\n')
+        # LCL = SP
+        self.file.write('@SP\n')
+        self.file.write('D=M\n')
+        self.file.write('@LCL\n')
+        self.file.write('M=D\n')
+        # goto f
+        func_name = 'Sys.init'
+        self.file.write('@%s\n' % func_name)
+        self.file.write('0;JMP\n')
+        # declare a label for the return-address
+        self.file.write('(%s)\n' % sys_init_ret_add)
+
     def createOutput(self):
-        # self.writeInit()
+        if not self.isfile:
+            self.writeBootstrap()
+        else:
+            # pass
+            self.writeBootstrap()
         self.parser.i = -1
         while self.parser.hasMoreCommands():
             self.parser.advance()
@@ -504,7 +626,37 @@ class CodeWriter:
 
 
 if __name__ == "__main__":
-    for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
-                 "FunctionCalls/SimpleFunction/SimpleFunction.vm"]:
-        codewriter = CodeWriter(path)
+    # for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
+    #              "FunctionCalls/SimpleFunction/SimpleFunction.vm",
+    #              "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
+    for path in ["FunctionCalls/StaticsTest/test_statics_test.vm"]:
+    # for path in ["FunctionCalls/test_function_fibonacci.vm", "FunctionCalls/test_function_call_Sysinit.vm",
+    #              "FunctionCalls/test_function_call.vm"]:
+    # for path in ["FunctionCalls/test_function_fibonacci.vm"]:
+    # for path in ["FunctionCalls/StaticsTest"]:
+        if os.path.isdir(path):
+            # handle the case where input path is a folder
+            files = [file_ for file_ in os.listdir(path) if file_.endswith(".vm")]
+            d_file_codewriter = {}
+            for f in files:
+                f_input = path + '/%s' % f
+                d_file_codewriter[f] = CodeWriter(f_input, False)
+            codewriter = d_file_codewriter['Sys.vm']
+            count_f = 0
+            for f in files:
+                if f != 'Sys.vm':
+                    if count_f == 0:
+                        codewriter.static_var_dict = {i: f for i in range(d_file_codewriter[f].parser.total_commands)}
+                    else:
+                        new_dict = {i + len(codewriter.static_var_dict): f for i in range(d_file_codewriter[f].parser.total_commands)}
+                        codewriter.static_var_dict.update(new_dict)
+                    codewriter.parser.clean_lines = d_file_codewriter[f].parser.clean_lines + codewriter.parser.clean_lines
+                    codewriter.parser.total_commands = len(codewriter.parser.clean_lines)
+                    count_f += 1
+            if path == "FunctionCalls/StaticsTest":
+                for l in codewriter.parser.clean_lines:
+                    print (l)
+        elif os.path.isfile(path):
+            # handle the case where input path is a file
+            codewriter = CodeWriter(path)
         codewriter.createOutput()
