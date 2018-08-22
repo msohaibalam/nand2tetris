@@ -24,11 +24,7 @@ class CodeWriter:
             writefile_ind = filepath.rfind('/')
             filepath_ = filepath[:writefile_ind]
             self.file = open(filepath_ + '/' + self.filename, 'w')
-            self.static_var_dict = {}
-            self.static_var = self.writefolder   # useful in declaring static variables
-            # # print ('self.writefile: ', self.writefile)
-            # self.writefile_ind = self.writefile.rfind('/')
-            # # print ('self.writefile[self.writefile_ind + 1:]: ', self.writefile[self.writefile_ind + 1:])
+            self.static_var_dict = {}   # useful in declaring static variables
             self.function_list = []
 
     def writePushPop(self):   # no need to pass in command as an argument
@@ -74,7 +70,6 @@ class CodeWriter:
                     self.file.write('M=D\n')
                 elif arg1 == 'static':
                     # declare a new symbol file.j in "push static j"
-                    self.file.write('// push static %s' % arg2)
                     if self.isfile:
                         self.file.write('@%s.%s\n' % (self.static_var, arg2))
                     else:
@@ -644,16 +639,11 @@ class CodeWriter:
 
 
 if __name__ == "__main__":
-    # for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
-    #              "FunctionCalls/SimpleFunction/SimpleFunction.vm",
-    #              "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
-    # for path in ["FunctionCalls/StaticsTest/test_statics_test.vm"]:
-    # for path in ["FunctionCalls/test_function_fibonacci.vm", "FunctionCalls/test_function_call_Sysinit.vm",
-    #              "FunctionCalls/test_function_call.vm"]:
-    # for path in ["FunctionCalls/test_function_fibonacci.vm"]:
-    for path in ["FunctionCalls/StaticsTest"]:
+    for path in ["ProgramFlow/BasicLoop/BasicLoop.vm", "ProgramFlow/FibonacciSeries/FibonacciSeries.vm",
+                 "FunctionCalls/SimpleFunction/SimpleFunction.vm",
+                 "FunctionCalls/FibonacciElement", "FunctionCalls/StaticsTest"]:
+    # handle the case where input path is a folder
         if os.path.isdir(path):
-            # handle the case where input path is a folder
             files = [file_ for file_ in os.listdir(path) if file_.endswith(".vm")]
             d_file_codewriter = {}
             for f in files:
@@ -668,7 +658,6 @@ if __name__ == "__main__":
                         codewriter.static_var_dict = {i: f for i in range(d_file_codewriter[f].parser.total_commands)}
                         prev_counts = d_file_codewriter[f].parser.total_commands
                     else:
-                        # new_dict = {i + len(codewriter.static_var_dict): f for i in range(d_file_codewriter[f].parser.total_commands)}
                         new_dict = {i + prev_counts: f for i in range(d_file_codewriter[f].parser.total_commands)}
                         codewriter.static_var_dict.update(new_dict)
                         prev_counts += d_file_codewriter[f].parser.total_commands
@@ -676,15 +665,10 @@ if __name__ == "__main__":
                     codewriter.parser.total_commands = len(codewriter.parser.clean_lines)
                     count_f += 1
             # post-processing of clean_lines
-            # print ('tot_lines_sys: ', tot_lines_sys)
             codewriter.parser.clean_lines = codewriter.parser.clean_lines[tot_lines_sys:] + codewriter.parser.clean_lines[:tot_lines_sys]
-            # for l in codewriter.parser.clean_lines:
-            #     print (l)
-            # print ("*" * 30)
-            # print (codewriter.static_var_dict)
-            # for k, v in codewriter.static_var_dict.items():
-            #     print (k, ": ", v)
+
+        # handle the case where input path is a file
         elif os.path.isfile(path):
-            # handle the case where input path is a file
             codewriter = CodeWriter(path)
+
         codewriter.createOutput()
